@@ -1,5 +1,5 @@
 resource "aws_iam_user" "github_actions" {
-  name = "github-actions-runner-trigger-user"
+  name = "github-actions-runner-user"
 }
 
 resource "aws_iam_policy" "github_actions_run_ecs" {
