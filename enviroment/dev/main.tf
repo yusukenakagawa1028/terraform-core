@@ -17,8 +17,8 @@ module "runner-setup" {
 #   }
 # }
 
-resource "aws_eip" "test_eip_3" {
-  tags = {
-    Name = "test-eip-3"
-  }
-}
+# resource "aws_eip" "test_eip_3" {
+#   tags = {
+#     Name = "test-eip-3"
+#   }
+# }
