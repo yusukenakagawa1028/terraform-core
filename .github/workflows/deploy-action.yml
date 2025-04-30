@@ -20,28 +20,26 @@ jobs:
         run: |
           echo "Launching ECS task for GitHub Actions runner..."
 
-          echo "Starting ECS Fargate task for GitHub Actions runner..."
           GH_RUNNER_TOKEN=$(curl -s -X POST \
-          -H "Authorization: token ${{ secrets.TOKEN_OF_GITHUB_PAT }}" \
-          -H "Accept: application/vnd.github+json" \
-          https://api.github.com/repos/yusukenakagawa1028/terraform-core/actions/runners/registration-token \
-          | jq -r .token)
+            -H "Authorization: token ${{ secrets.TOKEN_OF_GITHUB_PAT }}" \
+            -H "Accept: application/vnd.github+json" \
+            https://api.github.com/repos/yusukenakagawa1028/terraform-core/actions/runners/registration-token \
+            | jq -r .token)
 
           aws ecs run-task \
             --cluster github-runner-cluster \
             --launch-type FARGATE \
             --task-definition github-actions-runner-task \
-          --network-configuration "awsvpcConfiguration={subnets=[${{ secrets.RUNNER_EXECUTION_SUBNET_ID }}],securityGroups=[${{secrets.RUNNER_EXECUTION_SECURITY_GROUP_ID }}],assignPublicIp=ENABLED}" \
+            --network-configuration "awsvpcConfiguration={subnets=[${{ secrets.RUNNER_EXECUTION_SUBNET_ID }}],securityGroups=[${{ secrets.RUNNER_EXECUTION_SECURITY_GROUP_ID }}],assignPublicIp=ENABLED}" \
             --overrides "$(jq -n \
               --arg token "$GH_RUNNER_TOKEN" \
               --arg pat "${{ secrets.TOKEN_OF_GITHUB_PAT }}" \
               '{
                 containerOverrides: [{
                   name: "github-runner",
-                    environment: [{
-                        { name: "GH_RUNNER_TOKEN", value: $token },
-                        { name: "TOKEN_OF_GITHUB_PAT", value: $pat }
-                    }]
+                  environment: [
+                    { "name": "GH_RUNNER_TOKEN", "value": $token },
+                    { "name": "TOKEN_OF_GITHUB_PAT", "value": $pat }
+                  ]
                 }]
-              }' \
-            )"
+              }')"
