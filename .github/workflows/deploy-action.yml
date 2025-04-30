@@ -32,12 +32,16 @@ jobs:
             --launch-type FARGATE \
             --task-definition github-actions-runner-task \
           --network-configuration "awsvpcConfiguration={subnets=[${{ secrets.RUNNER_EXECUTION_SUBNET_ID }}],securityGroups=[${{secrets.RUNNER_EXECUTION_SECURITY_GROUP_ID }}],assignPublicIp=ENABLED}" \
-            --overrides "$(jq -n --arg token "$GH_RUNNER_TOKEN" '{
+            --overrides "$(jq -n \
+              --arg token "$GH_RUNNER_TOKEN" \
+              --arg pat "${{ secrets.TOKEN_OF_GITHUB_PAT }}" \
+              '{
                 containerOverrides: [{
                   name: "github-runner",
                     environment: [{
-                        name: "GH_RUNNER_TOKEN",
-                        value: $token
-                    }]  
+                        { name: "GH_RUNNER_TOKEN", value: $token },
+                        { name: "TOKEN_OF_GITHUB_PAT", value: $pat }
+                    }]
                 }]
-              }')"
+              }' \
+            )"

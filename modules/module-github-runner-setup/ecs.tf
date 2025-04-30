@@ -1,3 +1,7 @@
+resource "aws_ecs_cluster" "github_runner" {
+  name = "github-runner-cluster"
+}
+
 resource "aws_ecs_task_definition" "github_runner" {
   family                   = "github-actions-runner-task"
   requires_compatibilities = ["FARGATE"]
@@ -12,7 +16,28 @@ resource "aws_ecs_task_definition" "github_runner" {
       name      = "github-runner"
       image     = var.github_runner_image_url
       essential = true
-      environment = []
+      environment = [
+        {
+          name = "GH_RUNNER_TOKEN"
+          value: "actual_runtime_token"
+        },
+        {
+          name  = "TOKEN_OF_GITHUB_PAT"
+          value: "actual_runtime_token"
+        },
+        {
+          name  = "GIT_REPO"
+          value = var.git_repo
+        },
+        {
+          name  = "GIT_BRANCH"
+          value = var.execution_branch
+        },
+        {
+          name  = "ENV_DIR"
+          value = var.env_dir
+        }
+      ]
       logConfiguration = {
         logDriver = "awslogs",
         options = {
