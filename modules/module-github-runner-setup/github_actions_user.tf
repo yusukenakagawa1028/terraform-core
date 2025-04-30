@@ -23,7 +23,11 @@ resource "aws_iam_policy" "github_actions_run_ecs" {
       {
         Effect = "Allow",
         Action = [
-          "iam:PassRole"
+          "iam:PassRole",
+          "ecs:RunTask",
+          "ecs:DescribeTasks",
+          "ecs:DescribeTaskDefinition",
+          "ecs:DescribeClusters"
         ],
         Resource = [
           "arn:aws:iam::${data.aws_caller_identity.current.account_id}:role/ecsTaskExecutionRole",
