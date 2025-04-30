@@ -11,6 +11,7 @@ RUN apt-get update && apt-get install -y \
     software-properties-common \
     awscli \
     bash \
+    dos2unix \
     ca-certificates \
     && apt-get clean
 
@@ -28,5 +29,5 @@ RUN curl -O -L https://github.com/actions/runner/releases/download/v${RUNNER_VER
     && rm actions-runner-linux-x64-${RUNNER_VERSION}.tar.gz
 
 COPY --chown=runner:runner entrypoint.sh /home/runner/entrypoint.sh
-RUN chmod +x /home/runner/entrypoint.sh
+RUN dos2unix /home/runner/entrypoint.sh && chmod +x /home/runner/entrypoint.sh
 ENTRYPOINT ["/home/runner/entrypoint.sh"]
