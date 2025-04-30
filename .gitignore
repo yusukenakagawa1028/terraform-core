@@ -1,0 +1,6 @@
+.DS_Store
+.terraform.lock.hcl
+terraform.tfstate
+modules.json
+LICENSE.txt
+terraform-provider-aws_v5.96.0_x5
