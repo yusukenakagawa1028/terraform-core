@@ -16,3 +16,9 @@ resource "aws_eip" "test_eip_2" {
     Name = "test-eip-2"
   }
 }
+
+resource "aws_eip" "test_eip_3" {
+  tags = {
+    Name = "test-eip-3"
+  }
+}
