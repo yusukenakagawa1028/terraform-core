@@ -11,8 +11,8 @@ module "runner-setup" {
     git_repo                = "yusukenakagawa1028/terraform-core"
 }
 
-# resource "aws_eip" "test_eip" {
-#   tags = {
-#     Name = "test-eip"
-#   }
-# }
+resource "aws_eip" "test_eip" {
+  tags = {
+    Name = "test-eip"
+  }
+}

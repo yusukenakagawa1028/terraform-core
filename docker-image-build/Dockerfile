@@ -1,5 +1,5 @@
 FROM ubuntu:20.04
-
+ENV DEBIAN_FRONTEND=noninteractive
 #basic install
 RUN apt-get update && apt-get install -y \
     curl \
