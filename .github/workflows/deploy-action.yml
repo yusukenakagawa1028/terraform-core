@@ -8,9 +8,7 @@ on:
 
 jobs:
   start-ecs-runner:
-    name: Start ECS Task for GitHub Runner
     runs-on: ubuntu-latest
-
     steps:
       - name: Start ECS Fargate Runner Task
         env:
@@ -26,7 +24,7 @@ jobs:
             https://api.github.com/repos/yusukenakagawa1028/terraform-core/actions/runners/registration-token \
             | jq -r .token)
 
-          aws ecs run-task \
+          TASK_ARN=$(aws ecs run-task \
             --cluster github-runner-cluster \
             --launch-type FARGATE \
             --task-definition github-actions-runner-task \
@@ -42,4 +40,18 @@ jobs:
                     { "name": "TOKEN_OF_GITHUB_PAT", "value": $pat }
                   ]
                 }]
-              }')"
+              }')" \
+            --query 'tasks[0].taskArn' --output text)
+
+          echo "Started task: $TASK_ARN"
+
+          while true; do
+            STATUS=$(aws ecs describe-tasks --cluster github-runner-cluster --tasks $TASK_ARN \
+              --query 'tasks[0].lastStatus' --output text)
+
+            echo "Task status: $STATUS"
+            if [ "$STATUS" == "STOPPED" ]; then
+              break
+            fi
+            sleep 5
+          done
