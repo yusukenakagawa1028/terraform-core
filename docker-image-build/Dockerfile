@@ -29,4 +29,4 @@ RUN curl -O -L https://github.com/actions/runner/releases/download/v${RUNNER_VER
 
 COPY --chown=runner:runner entrypoint.sh /home/runner/entrypoint.sh
 RUN chmod +x /home/runner/entrypoint.sh
-CMD ["/home/runner/entrypoint.sh"]
+ENTRYPOINT ["/home/runner/entrypoint.sh"]
