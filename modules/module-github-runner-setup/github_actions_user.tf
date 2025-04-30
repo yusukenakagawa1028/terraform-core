@@ -16,9 +16,7 @@ resource "aws_iam_policy" "github_actions_run_ecs" {
           "ecs:DescribeTaskDefinition",
           "ecs:DescribeClusters"
         ],
-        Resource = [
-          "arn:aws:ecs:ap-northeast-1:${data.aws_caller_identity.current.account_id}:task-definition/github-actions-runner-task:*"
-        ]
+        Resource = "*"
       },
       {
         Effect = "Allow",
