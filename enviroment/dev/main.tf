@@ -8,8 +8,8 @@ module "runner-setup" {
     github_runner_image_url = module.ecr.github_runner_image_url
 }
 
-# resource "aws_eip" "test_eip" {
-#   tags = {
-#     Name = "test-eip"
-#   }
-# }
+resource "aws_eip" "test_eip" {
+  tags = {
+    Name = "test-eip"
+  }
+}
