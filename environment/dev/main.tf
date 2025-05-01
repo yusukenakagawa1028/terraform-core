@@ -17,8 +17,8 @@ resource "aws_eip" "test_eip_2" {
   }
 }
 
-# resource "aws_eip" "test_eip_3" {
-#   tags = {
-#     Name = "test-eip-3"
-#   }
-# }
+resource "aws_eip" "test_eip_3" {
+  tags = {
+    Name = "test-eip-3"
+  }
+}
