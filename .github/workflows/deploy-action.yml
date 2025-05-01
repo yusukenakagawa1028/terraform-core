@@ -50,9 +50,12 @@ jobs:
               --query 'tasks[0].lastStatus' --output text)
 
             echo "Task status: $STATUS"
-            if [ "$STATUS" == "STOPPED" ]; then
+
+            if [ "$STATUS" == "RUNNING" ]; then
+              echo "✅ ECS Task is running. Proceeding to deploy step."
               break
             fi
+
             sleep 5
           done
   deploy:
