@@ -100,7 +100,7 @@ jobs:
             --cluster github-runner-cluster \
             --task $TASK_ARN \
             --reason "GitHub Actions job complete"
-  stop-task:
+  stop-ecs-runner:
     needs: [start-ecs-runner, deploy]
     runs-on: ubuntu-latest
     steps:
