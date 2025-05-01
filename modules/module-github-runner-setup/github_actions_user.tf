@@ -44,6 +44,16 @@ resource "aws_iam_policy" "github_actions_run_ecs" {
           "arn:aws:s3:::pvdev-terraform-backend-bucket",
           "arn:aws:s3:::pvdev-terraform-backend-bucket/*"
         ]
+      },
+      {
+        Effect = "Allow",
+        Action = [
+          "kms:Decrypt",
+          "kms:Encrypt",
+          "kms:GenerateDataKey",
+          "kms:DescribeKey"
+        ],
+        Resource = "arn:aws:kms:${var.region}:${data.aws_caller_identity.current.account_id}:key/5d0fdd53-9f6a-4161-bd4a-5eeca512041f"
       }
     ]
   })
