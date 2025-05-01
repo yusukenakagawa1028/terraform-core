@@ -14,7 +14,8 @@ resource "aws_iam_policy" "github_actions_run_ecs" {
           "ecs:RunTask",
           "ecs:DescribeTasks",
           "ecs:DescribeTaskDefinition",
-          "ecs:DescribeClusters"
+          "ecs:DescribeClusters",
+          "ecs:StopTask"
         ],
         Resource = "*"
       },
