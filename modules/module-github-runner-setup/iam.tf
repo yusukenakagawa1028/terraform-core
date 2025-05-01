@@ -80,6 +80,15 @@ resource "aws_iam_policy" "execution_terraform" {
           "kms:DescribeKey"
         ],
         Resource = "arn:aws:kms:${var.region}:${data.aws_caller_identity.current.account_id}:key/5d0fdd53-9f6a-4161-bd4a-5eeca512041f"
+      },
+      {
+        Effect = "Allow",
+        Action = [
+          "dynamodb:GetItem",
+          "dynamodb:PutItem",
+          "dynamodb:DeleteItem"
+        ],
+        Resource = "arn:aws:dynamodb:${var.region}:${data.aws_caller_identity.current.account_id}:table/terraform-state-lock-table"
       }
     ]
   })
