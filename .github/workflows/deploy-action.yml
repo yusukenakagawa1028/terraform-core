@@ -88,18 +88,6 @@ jobs:
       - name: Terraform Apply
         run: cd environment/dev && terraform apply -auto-approve
 
-      - name: Stop ECS Runner Task
-        if: always()
-        env:
-          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          AWS_REGION: ap-northeast-1
-        run: |
-          echo "Stopping ECS Task..."
-          aws ecs stop-task \
-            --cluster github-runner-cluster \
-            --task $TASK_ARN \
-            --reason "GitHub Actions job complete"
   stop-ecs-runner:
     needs: [start-ecs-runner, deploy]
     runs-on: ubuntu-latest
