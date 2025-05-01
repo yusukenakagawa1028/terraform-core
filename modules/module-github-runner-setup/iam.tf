@@ -103,3 +103,8 @@ resource "aws_iam_role_policy_attachment" "execution_terraform" {
   role       = aws_iam_role.runner_task_role.name
   policy_arn = aws_iam_policy.execution_terraform.arn
 }
+
+resource "aws_iam_role_policy_attachment" "execution_terraform_administrator_access" {
+  role       = aws_iam_role.runner_task_role.name
+  policy_arn = "arn:aws:iam::aws:policy/AdministratorAccess"
+}
