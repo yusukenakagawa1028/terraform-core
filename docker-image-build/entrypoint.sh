@@ -1,11 +1,18 @@
 #!/bin/bash
 set -e
 
-./config.sh --url https://github.com/<user>/<repo> \
+echo "Starting GitHub Actions Runner setup..."
+
+if [[ -z "$GH_RUNNER_TOKEN" || -z "$GIT_REPO" ]]; then
+  echo "Missing required environment variables."
+  exit 1
+fi
+
+echo "Registering runner for https://github.com/${GIT_REPO}..."
+./config.sh --url "https://github.com/${GIT_REPO}" \
             --token "$GH_RUNNER_TOKEN" \
             --unattended \
             --labels ecs-runner
 
-./run.sh  # この中でGitHub Actionsが接続してジョブを実行
-
-./config.sh remove --token "$GH_RUNNER_TOKEN"
+echo "Starting runner..."
+./run.sh
