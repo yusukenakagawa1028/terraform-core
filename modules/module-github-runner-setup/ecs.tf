@@ -10,6 +10,10 @@ resource "aws_ecs_task_definition" "github_runner" {
   memory                  = "1024"
   execution_role_arn      = aws_iam_role.ecs_execution_role.arn
   task_role_arn           = aws_iam_role.runner_task_role.arn
+  runtime_platform {
+    cpu_architecture        = "X86_64"
+    operating_system_family = "LINUX"
+  }
 
   container_definitions = jsonencode([
     {
