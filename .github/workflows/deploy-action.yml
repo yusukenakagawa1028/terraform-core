@@ -93,8 +93,14 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Stop ECS Task
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_REGION: ap-northeast-1
         run: |
+          echo "Stopping ECS task..."
           aws ecs stop-task \
             --cluster github-runner-cluster \
             --task ${{ needs.start-ecs-runner.outputs.task_arn }} \
-            --reason "Job completed"          
+            --region $AWS_REGION \
+            --reason "GitHub Actions job completed"
