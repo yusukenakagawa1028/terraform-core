@@ -11,8 +11,11 @@ on:
 jobs:
   start-ecs-runner:
     runs-on: ubuntu-latest
+    outputs:
+      task_arn: ${{ steps.start.outputs.task_arn }}
     steps:
       - name: Start ECS Fargate Runner Task
+        id: start
         env:
           AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
@@ -47,6 +50,8 @@ jobs:
 
           echo "Started task: $TASK_ARN"
 
+          echo "::set-output name=task_arn::$TASK_ARN"
+
           while true; do
             STATUS=$(aws ecs describe-tasks --cluster github-runner-cluster --tasks $TASK_ARN \
               --query 'tasks[0].lastStatus' --output text)
@@ -63,6 +68,8 @@ jobs:
   deploy:
     needs: start-ecs-runner
     runs-on: [self-hosted, ecs-runner]
+    outputs:
+      task_arn: ${{ steps.start-task.outputs.task_arn }}
     steps:
       - name: Checkout source
         uses: actions/checkout@v3
@@ -80,3 +87,26 @@ jobs:
 
       - name: Terraform Apply
         run: cd environment/dev && terraform apply -auto-approve
+
+      - name: Stop ECS Runner Task
+        if: always()
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_REGION: ap-northeast-1
+        run: |
+          echo "Stopping ECS Task..."
+          aws ecs stop-task \
+            --cluster github-runner-cluster \
+            --task $TASK_ARN \
+            --reason "GitHub Actions job complete"
+  stop-task:
+    needs: [start-ecs-runner, deploy]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Stop ECS Task
+        run: |
+          aws ecs stop-task \
+            --cluster github-runner-cluster \
+            --task ${{ needs.start-ecs-runner.outputs.task_arn }} \
+            --reason "Job completed"          
