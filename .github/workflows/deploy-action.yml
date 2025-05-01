@@ -4,6 +4,8 @@ on:
   push:
     branches:
       - main
+    paths:
+      - 'environment/dev'
   workflow_dispatch:  # 手動実行トリガー
 
 jobs:
