@@ -61,8 +61,6 @@ jobs:
   deploy:
     needs: start-ecs-runner
     runs-on: [self-hosted, ecs-runner]
-    env:
-      ENV_NAME: dev
     steps:
       - name: Checkout source
         uses: actions/checkout@v3
@@ -71,7 +69,7 @@ jobs:
         uses: hashicorp/setup-terraform@v3
 
       - name: Terraform Init
-        run: cd /environment/${ENV_NAME}/ && terraform init
+        run: cd environment/dev && terraform init
 
       - name: Terraform Apply
-        run: cd /environment/${ENV_NAME}/ && terraform apply -auto-approve
+        run: cd environment/dev && terraform apply -auto-approve
