@@ -31,6 +31,19 @@ resource "aws_iam_policy" "github_actions_run_ecs" {
           "arn:aws:iam::${data.aws_caller_identity.current.account_id}:role/ecsTaskExecutionRole",
           "arn:aws:iam::${data.aws_caller_identity.current.account_id}:role/github-runner-task-role"
         ]
+      },
+      {
+        Effect = "Allow",
+        Action = [
+          "s3:ListBucket",
+          "s3:GetObject",
+          "s3:PutObject",
+          "s3:DeleteObject"
+        ],
+        Resource = [
+          "arn:aws:s3:::pvdev-terraform-backend-bucket",
+          "arn:aws:s3:::pvdev-terraform-backend-bucket/*"
+        ]
       }
     ]
   })
