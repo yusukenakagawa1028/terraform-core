@@ -64,7 +64,8 @@ jobs:
     env:
       ENV_NAME: dev
     steps:
-      - uses: actions/checkout@v3
+      - name: Checkout source
+        uses: actions/checkout@v3
 
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v3
