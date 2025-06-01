@@ -11,3 +11,6 @@ module "runner-setup" {
     git_repo                = "yusukenakagawa1028/terraform-core"
 }
 
+module "network" {
+    source = "../../modules/module-net-work"
+}
