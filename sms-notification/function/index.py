@@ -1,73 +1,90 @@
-import os
-import re
-import logging
 import boto3
-from email import policy
-from email.parser import BytesParser
+import urllib.parse
+import email
+import re
 
-logger = logging.getLogger()
-logger.setLevel(logging.INFO)
-
-s3 = boto3.client("s3")
+s3 = boto3.client('s3')
 sns = boto3.client("sns")
-
+response = None
 ABUSE_RE = re.compile(r"abuse", re.IGNORECASE)
-# 宛先（環境変数があればそちら優先）
-ALERT_PHONE_E164 = os.getenv("ALERT_PHONE_E164", "+818016217553")
+
+
+def extract_email_addresses(encoded_string):
+    email_pattern = r'<([^>]+)>'
+    
+    matches = re.findall(email_pattern, encoded_string)
+    
+    return matches
+
 
 def lambda_handler(event, context):
-    records = event.get("Records", [])
-    for r in records:
-        try:
-            bucket = r["s3"]["bucket"]["name"]
-            key = r["s3"]["object"]["key"]
+      records = event.get("Records", [])
+      processed = 0
+      for r in records:
+            try:
+                  bucket_name = r['s3']['bucket']['name']
+                  object_key = urllib.parse.unquote_plus(r['s3']['object']['key'], encoding='utf-8')
 
-            obj = s3.get_object(Bucket=bucket, Key=key)
-            raw_email = obj["Body"].read()
+                  S3objcet = s3.get_object(Bucket=bucket_name, Key=object_key)
+                  #   UTF-8に変換してしまうとメールの形式によって文字化けするためバイトで読み込む
+                  raw_email = S3objcet['Body'].read()
+                  msg = BytesParser(policy=policy.default).parsebytes(raw_email)
 
-            msg = BytesParser(policy=policy.default).parsebytes(raw_email)
-            email_subject = _safe_str(msg.get("subject"))
-            email_address_from = _safe_str(msg.get("from"))
-            email_address_to_mime = _safe_str(msg.get("to"))
-            email_address_cc = _safe_str(msg.get("cc"))
-            email_body = _extract_body_text(msg)
-                
-            print("subject: " + email_subject)
-            print("from: " + email_address_from)
-            print("to: " + email_address_to_mime)
-            print("cc: " + email_address_cc)
-            print("body: " + email_body)
+                  email_subject = _safe_str(msg.get("subject"))
+                  email_address_from = _safe_str(msg.get("from"))
+                  email_address_to_mime = _safe_str(msg.get("to"))
+                  email_address_cc = _safe_str(msg.get("cc"))
+                  email_body = _extract_body_text(msg)
+                  
+                  print("subject: " + email_subject)
+                  print("from: " + email_address_from)
+                  print("to: " + email_address_to_mime)
+                  print("cc: " + email_address_cc)
 
-            #   email_object = email.message_from_string(email_body)
-            haystack = email_subject + "\n" + email_body
+                  #   email_object = email.message_from_string(email_body)
+                  haystack = email_subject + "\n" + email_body
 
-            if ABUSE_RE.search(haystack):
-                print("Receive Abuse Report.")
-                message = "メールを確認してください"
-                response = sns.publish(
-                    PhoneNumber=ALERT_PHONE_E164,
-                    Message=message,
-                    # 重要性の高い通知のためTransactional属性を定義
-                    MessageAttributes={
-                        "AWS.SNS.SMS.SMSType": {"DataType": "String", "StringValue": "Transactional"}
-                    },
-                )
-                print(f"Message sent successfully. MessageId: {response['MessageId']} PhoneNumber:{table_data['toPhoneNumber']}")
-            else:
-                print("The email is not of critical security nature.")
-        except Exception as e:
+                  if ABUSE_RE.search(haystack):
+                        print("Receive Abuse Report.")
+                        email_addresses = extract_email_addresses(email_address_to_mime)
+                        email_addresses.append('all')
+                        
+                        dynamodb = boto3.resource('dynamodb')
+                        table = dynamodb.Table('security-mail-notice-send-address-list')
+
+                        table_info = table.scan()
+                        table = table_info['Items']
+
+                        for email_address in email_addresses:
+                              for table_data in table:
+                                    if table_data['teamAddress'] == email_address and table_data['sendType'] == 'SMS':
+                                          print(table_data['toPhoneNumber'])
+
+                                          message = "AWS不正通知:メールを確認してください"
+                                          response = sns.publish(
+                                                PhoneNumber=table_data['toPhoneNumber'],
+                                                Message=message,
+                                                # 重要性の高い通知のためTransactional属性を定義
+                                                MessageAttributes={
+                                                      "AWS.SNS.SMS.SMSType": {"DataType": "String", "StringValue": "Transactional"}
+                                                },
+                                          )
+                        print(f"Message sent successfully. MessageId: {response['MessageId']} PhoneNumber:{table_data['toPhoneNumber']}")
+                  else:
+                        print("The email is not of critical security nature.")
+      except Exception as e:
             print(f"Error sending message: {str(e)}")
             return {
-                'statusCode': 500,
-                'body': f"Error sending message: {str(e)}"
+                  'statusCode': 500,
+                  'body': f"Error sending message: {str(e)}"
             }
-        
-        return {
+      return {
             'statusCode': 200,
-            'body': f"Check mail successfully. Subject: {email_subject} Address: {email_address_from}"
-        }
+            'body': f"Message sent successfully. Subject: {email_subject} Address: {email_address_from}"
+      }
 
 
+# 件名・宛先抽出処理
 def _safe_str(v) -> str:
     if v is None:
         return ""
@@ -76,6 +93,7 @@ def _safe_str(v) -> str:
     return str(v)
 
 
+# 本文抽出処理
 def _extract_body_text(msg) -> str:
     texts_plain = []
     texts_html = []
@@ -121,19 +139,8 @@ def _extract_body_text(msg) -> str:
         html = re.sub(r"<[^>]+>", " ", html)
         html = re.sub(r"\s+", " ", html).strip()
         return html
+
     return ""
 
 
-def _send_sms_alert(subject: str, bucket: str, key: str):
-    # SMS は長すぎると分割され得るので、短めにまとめるのが安全です。:contentReference[oaicite:1]{index=1}
-    message = f"[ALERT] abuse detected. subject='{subject[:80]}' s3://{bucket}/{key}"
 
-    sns.publish(
-        PhoneNumber=ALERT_PHONE_E164,
-        Message=message,
-        MessageAttributes={
-            # 緊急通知用途なら Transactional が無難
-            "AWS.SNS.SMS.SMSType": {"DataType": "String", "StringValue": "Transactional"}
-        },
-    )
-    print(f"sent sms alert: {message}")
